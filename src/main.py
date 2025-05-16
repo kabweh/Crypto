@@ -2,6 +2,19 @@
 import sys
 import os
 
+# --- Explicitly load .env file for environment variables ---
+from dotenv import load_dotenv
+# Construct the path to the .env file, assuming it's in the project root (Crypto/)
+# main.py is in src/, so ../.env should point to Crypto/.env
+dotenv_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
+print(f"MAIN_PY_DEBUG: Attempting to load .env file from: {dotenv_path}")
+if os.path.exists(dotenv_path):
+    load_dotenv(dotenv_path=dotenv_path)
+    print(f"MAIN_PY_DEBUG: .env file found and loaded from {dotenv_path}.")
+else:
+    print(f"MAIN_PY_DEBUG: .env file NOT found at {dotenv_path}. Environment variables might not be set as expected.")
+# --- End of .env loading ---
+
 # Add project root to Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
