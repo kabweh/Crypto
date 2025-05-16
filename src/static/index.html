@@ -133,9 +133,7 @@
             const resultDiv = document.getElementById("reportResult");
 
             if (!identifier) {
-                resultDiv.innerHTML = 
-<span class="error">Please enter a wallet address or transaction hash.</span>
-;
+                resultDiv.innerHTML = `<span class="error">Please enter a wallet address or transaction hash.</span>`;
                 return;
             }
 
@@ -209,4 +207,3 @@
     </script>
 </body>
 </html>
-
