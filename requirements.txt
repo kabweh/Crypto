@@ -1,0 +1,5 @@
+Flask>=2.0
+Flask-CORS>=3.0
+requests>=2.20
+python-dotenv>=0.15 # For managing environment variables locally, good practice
+

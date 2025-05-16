@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Investigator Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+            text-align: center;
+        }
+        .form-section, .results-section, .monitoring-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input[type="text"], select {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        button {
+            background-color: #5cb85c;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #4cae4c;
+        }
+        #reportResult, #monitoringResult {
+            white-space: pre-wrap; /* Allows display of formatted JSON */
+            background-color: #eee;
+            padding: 15px;
+            border-radius: 4px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .finding {
+            border: 1px solid #eee;
+            padding: 10px;
+            margin-bottom:10px;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        .finding-type {
+            font-weight: bold; 
+            color: #d9534f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI-Powered Crypto Investigator</h1>
+
+        <!-- On-Demand Reports Section -->
+        <div class="form-section">
+            <h2>On-Demand Report</h2>
+            <label for="identifier">Wallet Address or Transaction Hash:</label>
+            <input type="text" id="identifier" name="identifier" placeholder="Enter BTC, ETH, BSC, or SOL address/tx">
+
+            <label for="chain">Blockchain:</label>
+            <select id="chain" name="chain">
+                <option value="ethereum">Ethereum (ETH)</option>
+                <option value="bitcoin">Bitcoin (BTC)</option>
+                <option value="bsc">Binance Smart Chain (BSC)</option>
+                <option value="solana">Solana (SOL)</option>
+            </select>
+
+            <label for="reportType">Report Type:</label>
+            <select id="reportType" name="reportType">
+                <option value="wallet">Wallet Report</option>
+                <option value="transaction">Transaction Report (Not Yet Implemented)</option> 
+            </select>
+
+            <button onclick="generateReport()">Generate Report</button>
+            <h3>Report Result:</h3>
+            <div id="reportResult">No report generated yet.</div>
+        </div>
+
+        <!-- Real-Time Monitoring Section -->
+        <div class="monitoring-section">
+            <h2>Real-Time Monitoring (Ethereum)</h2>
+            <button onclick="checkEthereumNow()">Check Latest Ethereum Block</button>
+            <h3>Monitoring Result:</h3>
+            <div id="monitoringResult">No monitoring check performed yet.</div>
+        </div>
+
+        <!-- Optional: Activity Feed / Visualizations could go here -->
+
+    </div>
+
+    <script>
+        async function generateReport() {
+            const identifier = document.getElementById("identifier").value;
+            const chain = document.getElementById("chain").value;
+            const reportType = document.getElementById("reportType").value;
+            const resultDiv = document.getElementById("reportResult");
+
+            if (!identifier) {
+                resultDiv.innerHTML = 
+<span class="error">Please enter a wallet address or transaction hash.</span>
+;
+                return;
+            }
+
+            resultDiv.innerHTML = "Generating report...";
+
+            try {
+                const response = await fetch("/api/reports/on-demand", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ identifier, chain, type: reportType }),
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    resultDiv.innerHTML = `<pre class="success">Source: ${data.source || "N/A"}\n\n${JSON.stringify(data.details || data, null, 2)}</pre>`;
+                    if(data.address_info) { // For Bitcoin
+                         resultDiv.innerHTML += `<pre class="success">Address Info:\n${JSON.stringify(data.address_info, null, 2)}</pre>`;
+                    }
+                } else {
+                    resultDiv.innerHTML = `<pre class="error">Error: ${data.message || "Failed to fetch report."}\nSource: ${data.source || "N/A"}</pre>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<pre class="error">Network or application error: ${error.message}</pre>`;
+            }
+        }
+
+        async function checkEthereumNow() {
+            const resultDiv = document.getElementById("monitoringResult");
+            resultDiv.innerHTML = "Checking latest Ethereum block...";
+
+            try {
+                const response = await fetch("/api/monitoring/check-ethereum-now", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({}), // Empty body as per current backend
+                });
+                const data = await response.json();
+                
+                let htmlOutput = "";
+                if (response.ok) {
+                    htmlOutput = `<p class="success">Status: ${data.message}</p>`;
+                    if (data.block_number) {
+                        htmlOutput += `<p>Block Number: ${data.block_number} (Source: ${data.source || "N/A"})</p>`;
+                    }
+                    if (data.findings && data.findings.length > 0) {
+                        htmlOutput += "<h4>Suspicious Findings:</h4>";
+                        data.findings.forEach(finding => {
+                            htmlOutput += `<div class="finding">
+                                <p><span class="finding-type">Type: ${finding.type}</span></p>
+                                <p>Message: ${finding.message}</p>
+                                <pre>Details: ${JSON.stringify(finding.details, null, 2)}</pre>
+                            </div>`;
+                        });
+                    } else if (data.findings) { // Findings array exists but is empty
+                        htmlOutput += "<p>No suspicious activity detected by current rules.</p>";
+                    }
+                } else {
+                    htmlOutput = `<p class="error">Error: ${data.message || "Failed to perform check."}</p>`;
+                     if (data.source) {
+                        htmlOutput += `<p class="error">Source: ${data.source}</p>`;
+                    }
+                }
+                resultDiv.innerHTML = htmlOutput;
+            } catch (error) {
+                resultDiv.innerHTML = `<pre class="error">Network or application error: ${error.message}</pre>`;
+            }
+        }
+    </script>
+</body>
+</html>
+
